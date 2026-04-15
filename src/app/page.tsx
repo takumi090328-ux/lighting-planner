@@ -83,7 +83,7 @@ const ADDABLE: EquipmentType[] = ["camera", "light-bowl", "light-octa", "light-u
 const POWER_OPT = ["1/1", "1/2", "1/4", "1/8", "1/16", "1/32", "1/64", "1/128"];
 const F_OPT = ["F1.4", "F2", "F2.8", "F4", "F5.6", "F8", "F11", "F16", "F22"];
 const SS_OPT = ["1/60", "1/80", "1/100", "1/125", "1/160", "1/200", "1/250", "1/500"];
-const ISO_OPT = ["100", "200", "400", "800", "1600", "3200"];
+const ISO_OPT  = ["100","125","160","200","250","320","400","500","640","800","1000"];
 const GROUPS: StrobeGroup[] = ["A", "B", "C"];
 
 const PRESETS: StudioPreset[] = [
@@ -421,33 +421,33 @@ export default function Home() {
                     {/* 光コーン */}
                     <ConeWithGroup rotation={item.rotation} type={item.type} group={item.group} />
                     {/* チップ本体 */}
-                    <div
-                      onMouseDown={e => startDrag(item.id, e)}
-                      onTouchStart={e => startDrag(item.id, e)}
-                      onClick={() => setSelectedId(item.id)}
-                      className="relative z-10 cursor-move select-none rounded-xl"
-                      style={{
-                        whiteSpace: "nowrap", padding: "5px 10px",
-                        background: isSel ? C.accentSoft : C.card,
-                        border: `1.5px solid ${isSel ? C.accent : C.border}`,
-                        boxShadow: isSel ? `0 2px 12px ${C.accent}33` : "0 1px 4px rgba(0,0,0,0.06)",
-                        ...(isRef ? { transform: `rotate(${item.rotation}deg)`, transformOrigin: "center center" } : {}),
-                      }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span style={{ color: isSel ? C.accent : C.textSub }}><Icon type={item.type} size={20} /></span>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: isSel ? C.text : C.textSub }}>
-                          {item.label}{tiltStr}
-                        </span>
-                        {item.group && (
-                          <span style={{
-                            width: 8, height: 8, borderRadius: "50%",
-                            background: G_CLR[item.group].dot,
-                            boxShadow: `0 0 6px ${G_CLR[item.group].dot}55`,
-                          }} />
-                        )}
-                      </div>
-                    </div>
+                   <div
+  onMouseDown={e => startDrag(item.id, e)}
+  onTouchStart={e => startDrag(item.id, e)}
+  onClick={() => setSelectedId(item.id)}
+  className="relative z-10 cursor-move select-none rounded-xl"
+  style={{
+    whiteSpace: "nowrap", padding: "5px 10px",
+    background: isSel ? C.accentSoft : "#F5F5F7",
+    border: `1.5px solid ${isSel ? C.accent : "#E0E0E0"}`,
+    boxShadow: isSel ? `0 2px 12px ${C.accent}33` : "0 1px 4px rgba(0,0,0,0.06)",
+    ...(isRef ? { transform: `rotate(${item.rotation}deg)`, transformOrigin: "center center" } : {}),
+  }}
+>
+  <div className="flex items-center gap-2">
+    <span style={{ color: isSel ? C.accent : "#555" }}><Icon type={item.type} size={20} /></span>
+    <span style={{ fontSize: 11, fontWeight: 600, color: isSel ? C.text : "#333" }}>
+      {item.label}{tiltStr}
+    </span>
+    {item.group && (
+      <span style={{
+        width: 8, height: 8, borderRadius: "50%",
+        background: G_CLR[item.group].dot,
+        boxShadow: `0 0 6px ${G_CLR[item.group].dot}55`,
+      }} />
+    )}
+  </div>
+</div>
                   </div>
                 );
               })}
