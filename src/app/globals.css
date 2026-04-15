@@ -25,19 +25,8 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 @media print {
-  /* 通常UIを全て非表示 */
-  body > *:not(#print-overlay) {
-    display: none !important;
-  }
-
-  #print-overlay {
-    display: flex !important;
-  }
-
-  #print-overlay > div {
-    display: flex !important;
-  }
-
+  body > *:not(#print-overlay) { display: none !important; }
+  #print-overlay { display: flex !important; }
   html, body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -47,12 +36,9 @@ body {
     height: 100vh !important;
     overflow: hidden !important;
   }
-
-  @page {
-    size: A4 landscape;
-    margin: 0;
-  }
+  @page { size: A4 landscape; margin: 5mm; }
 }
+
 
 
 
