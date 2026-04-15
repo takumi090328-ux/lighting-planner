@@ -236,107 +236,104 @@ export default function Home() {
   };
 
   /* --- PDF出力 --- */
-  const printPDF = () => {
-  const studioEl = document.querySelector("[data-studio]") as HTMLElement | null;
-  if (!studioEl) return;
+    const printPDF = () => {
+    const studioEl = document.querySelector("[data-studio]") as HTMLElement | null;
+    if (!studioEl) return;
 
-  const lightItems = items.filter(i => TYPE_META[i.type].isLight);
+    const lightItems = items.filter(i => TYPE_META[i.type].isLight);
 
-  const strobeRows = lightItems.map(it => {
-    const tLabel = TYPE_META[it.type].defaultLabel;
-    const gC = it.group ? G_CLR[it.group].dot : "#888";
-    const tiltStr = it.tilt !== 0 ? `${it.tilt > 0 ? "↑" : "↓"}${Math.abs(it.tilt)}°` : "";
-    return `
-      <tr style="border-bottom:1px solid #E8E4DD;">
-        <td style="padding:8px 4px;"><div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:${gC};"></div><div><div style="font-size:11px;font-weight:700;color:#2C2C2E;">${it.label}</div><div style="font-size:9px;color:#8E8E93;">${tLabel}</div></div></div></td>
-        <td style="padding:8px 4px;font-size:12px;font-weight:700;color:#2C2C2E;text-align:center;">${it.power}</td>
-        <td style="padding:8px 4px;font-size:10px;color:#8E8E93;text-align:center;">${tiltStr || "—"}</td>
-        <td style="padding:8px 4px;font-size:11px;font-weight:700;color:${gC};text-align:center;">${it.group || "—"}</td>
-      </tr>`;
-  }).join("");
+    const strobeRows = lightItems.map(it => {
+      const tLabel = TYPE_META[it.type].defaultLabel;
+      const gC = it.group ? G_CLR[it.group].dot : "#888";
+      const tiltStr = it.tilt !== 0 ? `${it.tilt > 0 ? "↑" : "↓"}${Math.abs(it.tilt)}°` : "";
+      return `
+        <tr style="border-bottom:1px solid #E8E4DD;">
+          <td style="padding:6px 4px;"><div style="display:flex;align-items:center;gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:${gC};"></div><div><div style="font-size:11px;font-weight:700;color:#2C2C2E;">${it.label}</div><div style="font-size:9px;color:#8E8E93;">${tLabel}</div></div></div></td>
+          <td style="padding:6px 4px;font-size:12px;font-weight:700;color:#2C2C2E;text-align:center;">${it.power}</td>
+          <td style="padding:6px 4px;font-size:10px;color:#8E8E93;text-align:center;">${tiltStr || "—"}</td>
+          <td style="padding:6px 4px;font-size:11px;font-weight:700;color:${gC};text-align:center;">${it.group || "—"}</td>
+        </tr>`;
+    }).join("");
 
-  // クローンを作って余白を非表示に
-  const clone = studioEl.cloneNode(true) as HTMLElement;
-  const cloneMargin = clone.querySelector("[data-print-margin]") as HTMLElement | null;
-  const cloneLabel = clone.querySelector("[data-print-margin-label]") as HTMLElement | null;
-  if (cloneMargin) cloneMargin.style.display = "none";
-  if (cloneLabel) cloneLabel.style.display = "none";
-  clone.style.height = layout.floorPxH + "px";
-  clone.style.overflow = "hidden";
+    // クローン作成、余白を非表示
+    const clone = studioEl.cloneNode(true) as HTMLElement;
+    const cm = clone.querySelector("[data-print-margin]") as HTMLElement | null;
+    const cl = clone.querySelector("[data-print-margin-label]") as HTMLElement | null;
+    if (cm) cm.style.display = "none";
+    if (cl) cl.style.display = "none";
+    clone.style.height = layout.floorPxH + "px";
+    clone.style.overflow = "hidden";
 
-  const overlay = document.createElement("div");
-  overlay.id = "print-overlay";
-  overlay.style.cssText = "display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:white;z-index:99999;box-sizing:border-box;padding:20px;";
+    // A4横: 約297mm x 210mm → margin 5mm引くと 287x200mm → px換算(96dpi) ≒ 1093x756
+    // 右パネル240px、gap20px、padding40px → 配置図使える幅 ≒ 793px
+    const printW = 793;
+    const printH = 716; // 756 - padding
+    const scaleW = printW / layout.totalPx;
+    const scaleH = printH / layout.floorPxH;
+    const finalScale = Math.min(scaleW, scaleH);
 
-  overlay.innerHTML = `
-    <div style="display:flex;gap:20px;height:100%;box-sizing:border-box;">
-      <!-- 左：配置図 -->
-      <div id="print-studio-slot" style="flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
-      <!-- 右：設定パネル -->
-      <div style="width:240px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;padding-top:4px;">
-        <!-- ヘッダー -->
-        <div>
-          <div style="font-size:20px;font-weight:800;color:#2C2C2E;">${preset.name}</div>
-          <div style="font-size:10px;color:#8E8E93;margin-top:2px;">${new Date().toLocaleDateString("ja-JP")} ／ ${preset.floorW}×${preset.floorH}mm</div>
-        </div>
-        <!-- カメラ設定 -->
-        <div>
-          <div style="font-size:9px;font-weight:700;color:#8E8E93;letter-spacing:0.1em;margin-bottom:6px;">CAMERA</div>
-          <table style="width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-            <tr>
-              <td style="padding:10px;text-align:center;border-right:1px solid #E8E4DD;width:50%;">
-                <div style="font-size:8px;font-weight:700;color:#8E8E93;">F</div>
-                <div style="font-size:24px;font-weight:800;color:#E8A849;line-height:1.2;">${cam.aperture}</div>
-              </td>
-              <td style="padding:10px;text-align:center;width:50%;">
-                <div style="font-size:8px;font-weight:700;color:#8E8E93;">SS</div>
-                <div style="font-size:24px;font-weight:800;color:#E8A849;line-height:1.2;">${cam.shutter}</div>
-              </td>
-            </tr>
-            <tr>
-              <td colspan="2" style="padding:8px;text-align:center;border-top:1px solid #E8E4DD;">
-                <div style="font-size:8px;font-weight:700;color:#8E8E93;">ISO</div>
-                <div style="font-size:24px;font-weight:800;color:#E8A849;line-height:1.2;">${cam.iso}</div>
-              </td>
-            </tr>
-          </table>
-        </div>
-        ${lightItems.length > 0 ? `
-        <!-- ストロボ -->
-        <div>
-          <div style="font-size:9px;font-weight:700;color:#8E8E93;letter-spacing:0.1em;margin-bottom:6px;">STROBE (${lightItems.length})</div>
-          <table style="width:100%;border-collapse:collapse;font-size:11px;">
-            <thead><tr style="border-bottom:2px solid #E8E4DD;">
-              <th style="text-align:left;padding:4px;font-size:9px;color:#8E8E93;font-weight:600;">名前</th>
-              <th style="text-align:center;padding:4px;font-size:9px;color:#8E8E93;font-weight:600;">光量</th>
-              <th style="text-align:center;padding:4px;font-size:9px;color:#8E8E93;font-weight:600;">角度</th>
-              <th style="text-align:center;padding:4px;font-size:9px;color:#8E8E93;font-weight:600;">Grp</th>
-            </tr></thead>
-            <tbody>${strobeRows}</tbody>
-          </table>
-        </div>` : ""}
-      </div>
-    </div>`;
-
-  document.body.appendChild(overlay);
-
-  // クローンをスロットに挿入してスケーリング
-  const slot = document.getElementById("print-studio-slot");
-  if (slot && clone) {
-    clone.style.transformOrigin = "top left";
-    // A4横の利用可能高さに合わせてスケール計算
-    const availH = window.innerHeight - 40; // padding分
-    const availW = slot.clientWidth || (window.innerWidth - 240 - 60);
-    const scaleH = availH / layout.floorPxH;
-    const scaleW = availW / layout.totalPx;
-    const finalScale = Math.min(scaleH, scaleW, 1.2);
     clone.style.transform = `scale(${finalScale})`;
-    slot.appendChild(clone);
-  }
+    clone.style.transformOrigin = "top left";
 
-  window.print();
-  document.body.removeChild(overlay);
-};
+    const scaledW = layout.totalPx * finalScale;
+    const scaledH = layout.floorPxH * finalScale;
+
+    const overlay = document.createElement("div");
+    overlay.id = "print-overlay";
+    overlay.style.cssText = "display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:white;z-index:99999;box-sizing:border-box;padding:20px;";
+
+    overlay.innerHTML = `
+      <div style="display:flex;gap:20px;height:100%;box-sizing:border-box;">
+        <div id="print-studio-slot" style="flex:1;overflow:hidden;position:relative;width:${scaledW}px;height:${scaledH}px;"></div>
+        <div style="width:240px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;padding-top:0;">
+          <div>
+            <div style="font-size:20px;font-weight:800;color:#2C2C2E;">${preset.name}</div>
+            <div style="font-size:10px;color:#8E8E93;margin-top:2px;">${new Date().toLocaleDateString("ja-JP")} ／ ${preset.floorW}×${preset.floorH}mm</div>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:#8E8E93;letter-spacing:0.1em;margin-bottom:6px;">CAMERA</div>
+            <table style="width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+              <tr>
+                <td style="padding:10px;text-align:center;border-right:1px solid #E8E4DD;width:50%;">
+                  <div style="font-size:8px;font-weight:700;color:#8E8E93;">F</div>
+                  <div style="font-size:24px;font-weight:800;color:#E8A849;line-height:1.2;">${cam.aperture}</div>
+                </td>
+                <td style="padding:10px;text-align:center;width:50%;">
+                  <div style="font-size:8px;font-weight:700;color:#8E8E93;">SS</div>
+                  <div style="font-size:24px;font-weight:800;color:#E8A849;line-height:1.2;">${cam.shutter}</div>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding:8px;text-align:center;border-top:1px solid #E8E4DD;">
+                  <div style="font-size:8px;font-weight:700;color:#8E8E93;">ISO</div>
+                  <div style="font-size:24px;font-weight:800;color:#E8A849;line-height:1.2;">${cam.iso}</div>
+                </td>
+              </tr>
+            </table>
+          </div>
+          ${lightItems.length > 0 ? `
+          <div>
+            <div style="font-size:9px;font-weight:700;color:#8E8E93;letter-spacing:0.1em;margin-bottom:6px;">STROBE (${lightItems.length})</div>
+            <table style="width:100%;border-collapse:collapse;font-size:11px;">
+              <thead><tr style="border-bottom:2px solid #E8E4DD;">
+                <th style="text-align:left;padding:4px;font-size:9px;color:#8E8E93;font-weight:600;">名前</th>
+                <th style="text-align:center;padding:4px;font-size:9px;color:#8E8E93;font-weight:600;">光量</th>
+                <th style="text-align:center;padding:4px;font-size:9px;color:#8E8E93;font-weight:600;">角度</th>
+                <th style="text-align:center;padding:4px;font-size:9px;color:#8E8E93;font-weight:600;">Grp</th>
+              </tr></thead>
+              <tbody>${strobeRows}</tbody>
+            </table>
+          </div>` : ""}
+        </div>
+      </div>`;
+
+    document.body.appendChild(overlay);
+    const slot = document.getElementById("print-studio-slot");
+    if (slot) slot.appendChild(clone);
+    window.print();
+    document.body.removeChild(overlay);
+  };
+
 
 
   const switchPreset = (id: string) => { setPresetId(id); setSelectedId(null); };
