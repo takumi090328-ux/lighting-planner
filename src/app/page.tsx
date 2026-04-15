@@ -74,10 +74,11 @@ const ISO_OPT = ["100","200","400","800","1600","3200"];
 const GROUPS: StrobeGroup[] = ["A","B","C"];
 
 const PRESETS: StudioPreset[] = [
-  {id:"1f-1",name:"1F-1",sideW:1000,floorW:3000,floorH:3000,tile:450,showTiles:false,floorColor:C.floor,sideColor:C.floor,marginH:2000},
-  {id:"2f-1",name:"2F-1",sideW:1250,floorW:3150,floorH:3150,tile:450,showTiles:true,floorColor:C.floor,sideColor:C.side,marginH:2000},
-  {id:"2f-2",name:"2F-2",sideW:1250,floorW:3150,floorH:3150,tile:450,showTiles:true,floorColor:C.floor,sideColor:C.side,marginH:2000},
+  {id:"1f-1",name:"1F-1",sideW:1000,floorW:3000,floorH:3000,tile:450,showTiles:false,floorColor:C.floor,sideColor:C.floor,marginH:1000},
+  {id:"2f-1",name:"2F-1",sideW:1250,floorW:3150,floorH:3150,tile:450,showTiles:true,floorColor:C.floor,sideColor:C.side,marginH:1000},
+  {id:"2f-2",name:"2F-2",sideW:1250,floorW:3150,floorH:3150,tile:450,showTiles:true,floorColor:C.floor,sideColor:C.side,marginH:1000},
 ];
+
 
 /* ============================================================
    ヘルパー
