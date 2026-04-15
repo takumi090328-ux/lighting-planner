@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 
 /* ============================================================
    型定義
@@ -27,19 +27,10 @@ interface StudioPreset {
    デザイントークン
 ============================================================ */
 const C = {
-  bg: "#1C1C1E",
-  card: "#2C2C2E",
-  cardHover: "#3A3A3C",
-  accent: "#E8A849",
-  accentSub: "#D4943D",
-  accentSoft: "rgba(232,168,73,0.10)",
-  text: "#F5F5F7",
-  textSub: "#8E8E93",
-  border: "#3A3A3C",
-  floor: "#F7F5F0",
-  side: "#E8E4DD",
-  margin: "#D6D2CB",
-  gridLine: "rgba(0,0,0,0.08)",
+  bg: "#1C1C1E", card: "#2C2C2E", cardHover: "#3A3A3C", accent: "#E8A849",
+  accentSub: "#D4943D", accentSoft: "rgba(232,168,73,0.10)",
+  text: "#F5F5F7", textSub: "#8E8E93", border: "#3A3A3C",
+  floor: "#F7F5F0", side: "#E8E4DD", margin: "#D6D2CB", gridLine: "rgba(0,0,0,0.08)",
 };
 const G_CLR: Record<string, { dot: string; cone: string }> = {
   A: { dot: "#E8A849", cone: "rgba(232,168,73,0.18)" },
@@ -83,7 +74,7 @@ const ADDABLE: EquipmentType[] = ["camera", "light-bowl", "light-octa", "light-u
 const POWER_OPT = ["1/1", "1/2", "1/4", "1/8", "1/16", "1/32", "1/64", "1/128"];
 const F_OPT = ["F1.4", "F2", "F2.8", "F4", "F5.6", "F8", "F11", "F16", "F22"];
 const SS_OPT = ["1/60", "1/80", "1/100", "1/125", "1/160", "1/200", "1/250", "1/500"];
-const ISO_OPT  = ["100","125","160","200","250","320","400","500","640","800","1000"];
+const ISO_OPT = ["100", "125", "160", "200", "250", "320", "400", "500", "640", "800", "1000"];
 const GROUPS: StrobeGroup[] = ["A", "B", "C"];
 
 const PRESETS: StudioPreset[] = [
@@ -104,7 +95,7 @@ const calc = (p: StudioPreset) => {
   const floorPx = p.floorW * S;
   const floorPxH = p.floorH * S;
   const marginPxH = p.marginH * S;
-  const totalPx = sidePx + floorPx;          // ← 左サイドのみ
+  const totalPx = sidePx + floorPx;
   const totalPxH = floorPxH + marginPxH;
   const tilePx = p.tile * S;
   return { s: S, totalPx, sidePx, floorPx, floorPxH, marginPxH, totalPxH, tilePx };
@@ -112,65 +103,38 @@ const calc = (p: StudioPreset) => {
 
 const makeInit = (p: StudioPreset): Equipment[] => {
   const l = calc(p);
+  const cx = l.sidePx + l.floorPx * 0.5;
+  const sy = l.floorPxH * 0.45;
+  const kx = l.sidePx + l.floorPx * 0.3, ky = l.floorPxH * 0.3;
+  const fx = l.sidePx + l.floorPx * 0.7, fy = l.floorPxH * 0.3;
+  const keyRot = Math.round(Math.atan2(sy - ky, cx - kx) * 180 / Math.PI);
+  const fillRot = Math.round(Math.atan2(sy - fy, cx - fx) * 180 / Math.PI);
   return [
-    { id: uid(), type: "camera", label: "カメラ", x: l.sidePx + l.floorPx * 0.5, y: l.floorPxH * 0.85, rotation: 0, tilt: 0, power: "—", height: 150, group: null },
-    { id: uid(), type: "light-bowl", label: "キー", x: l.sidePx + l.floorPx * 0.3, y: l.floorPxH * 0.3, rotation: 135, tilt: -15, power: "1/2", height: 220, group: "A" },
-    { id: uid(), type: "light-bowl", label: "フィル", x: l.sidePx + l.floorPx * 0.7, y: l.floorPxH * 0.3, rotation: -135, tilt: -10, power: "1/4", height: 200, group: "B" },
-    { id: uid(), type: "subject", label: "被写体", x: l.sidePx + l.floorPx * 0.5, y: l.floorPxH * 0.45, rotation: 0, tilt: 0, power: "—", height: 0, group: null },
-    { id: uid(), type: "background", label: "背景", x: l.sidePx + l.floorPx * 0.5, y: 20, rotation: 0, tilt: 0, power: "—", height: 0, group: null },
+    { id: uid(), type: "camera", label: "カメラ", x: cx, y: l.floorPxH * 0.85, rotation: 0, tilt: 0, power: "—", height: 150, group: null },
+    { id: uid(), type: "light-bowl", label: "キー", x: kx, y: ky, rotation: keyRot, tilt: -15, power: "1/2", height: 220, group: "A" },
+    { id: uid(), type: "light-bowl", label: "フィル", x: fx, y: fy, rotation: fillRot, tilt: -10, power: "1/4", height: 200, group: "B" },
+    { id: uid(), type: "subject", label: "被写体", x: cx, y: sy, rotation: 0, tilt: 0, power: "—", height: 0, group: null },
+    { id: uid(), type: "background", label: "背景", x: cx, y: 20, rotation: 0, tilt: 0, power: "—", height: 0, group: null },
   ];
 };
 
 /* ============================================================
-   光の三角コーン（機材チップ内に配置）
+   光コーン（チップ中央から描画）
 ============================================================ */
-const Cone = ({ rotation, type, id }: { rotation: number; type: EquipmentType; id: string }) => {
-  const meta = TYPE_META[type];
-  if (!meta.isLight) return null;
-
-  const len = 120;
-  const half = 28;
-  const rad = (rotation * Math.PI) / 180;
-  const lRad = ((rotation - half) * Math.PI) / 180;
-  const rRad = ((rotation + half) * Math.PI) / 180;
-  const ox = 0, oy = 0;
-  const lx = ox + Math.cos(lRad) * len;
-  const ly = oy + Math.sin(lRad) * len;
-  const rx = ox + Math.cos(rRad) * len;
-  const ry = oy + Math.sin(rRad) * len;
-
-  // Find the item's group to color the cone - we use a data attribute approach
-  return (
-    <svg
-      className="absolute pointer-events-none"
-      style={{ left: 0, top: 0, width: 1, height: 1, overflow: "visible", zIndex: 1 }}
-      data-cone-for={id}
-    >
-      <polygon
-        points={`${ox},${oy} ${lx},${ly} ${rx},${ry}`}
-        fill="rgba(232,168,73,0.18)"
-        stroke="none"
-      />
-    </svg>
-  );
-};
-
-/* コーン色をグループに合わせる版 */
 const ConeWithGroup = ({ rotation, type, group }: { rotation: number; type: EquipmentType; group: StrobeGroup }) => {
   if (!TYPE_META[type].isLight) return null;
   const len = 120, half = 28;
   const rad = (rotation * Math.PI) / 180;
   const lRad = ((rotation - half) * Math.PI) / 180;
   const rRad = ((rotation + half) * Math.PI) / 180;
-  const ox = 0, oy = 0;
-  const lx = ox + Math.cos(lRad) * len, ly = oy + Math.sin(lRad) * len;
-  const rx = ox + Math.cos(rRad) * len, ry = oy + Math.sin(rRad) * len;
-  const ex = ox + Math.cos(rad) * len, ey = oy + Math.sin(rad) * len;
+  const lx = Math.cos(lRad) * len, ly = Math.sin(lRad) * len;
+  const rx = Math.cos(rRad) * len, ry = Math.sin(rRad) * len;
+  const ex = Math.cos(rad) * len, ey = Math.sin(rad) * len;
   const gc = group ? G_CLR[group].cone : "rgba(232,168,73,0.18)";
   return (
-    <svg className="absolute pointer-events-none" style={{ left: 0, top: 0, width: 1, height: 1, overflow: "visible", zIndex: 1 }}>
-      <polygon points={`${ox},${oy} ${lx},${ly} ${rx},${ry}`} fill={gc} stroke="none" />
-      <line x1={ox} y1={oy} x2={ex} y2={ey} stroke={gc} strokeWidth={1} opacity={0.5} />
+    <svg className="absolute pointer-events-none" style={{ left: "50%", top: "50%", width: 1, height: 1, overflow: "visible", zIndex: 1 }}>
+      <polygon points={`0,0 ${lx},${ly} ${rx},${ry}`} fill={gc} stroke="none" />
+      <line x1={0} y1={0} x2={ex} y2={ey} stroke={gc} strokeWidth={1} opacity={0.5} />
     </svg>
   );
 };
@@ -181,16 +145,9 @@ const ConeWithGroup = ({ rotation, type, group }: { rotation: number; type: Equi
 const Tiles = ({ layout: l, preset: p }: { layout: ReturnType<typeof calc>; preset: StudioPreset }) => {
   if (!p.showTiles) return null;
   const lines: React.ReactNode[] = [];
-  const cols = Math.floor(p.floorW / p.tile);
-  const rows = Math.floor(p.floorH / p.tile);
-  for (let i = 0; i <= cols; i++) {
-    const x = l.sidePx + i * l.tilePx;
-    lines.push(<div key={`c${i}`} className="absolute" style={{ left: x, top: 0, width: 0.5, height: l.floorPxH, background: C.gridLine }} />);
-  }
-  for (let j = 0; j <= rows; j++) {
-    const y = j * l.tilePx;
-    lines.push(<div key={`r${j}`} className="absolute" style={{ left: l.sidePx, top: y, width: l.floorPx, height: 0.5, background: C.gridLine }} />);
-  }
+  const cols = Math.floor(p.floorW / p.tile), rows = Math.floor(p.floorH / p.tile);
+  for (let i = 0; i <= cols; i++) { const x = l.sidePx + i * l.tilePx; lines.push(<div key={`c${i}`} className="absolute" style={{ left: x, top: 0, width: 0.5, height: l.floorPxH, background: C.gridLine }} />); }
+  for (let j = 0; j <= rows; j++) { const y = j * l.tilePx; lines.push(<div key={`r${j}`} className="absolute" style={{ left: l.sidePx, top: y, width: l.floorPx, height: 0.5, background: C.gridLine }} />); }
   return <>{lines}</>;
 };
 
@@ -232,7 +189,7 @@ export default function Home() {
   const stuRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ id: string; ox: number; oy: number } | null>(null);
 
-  /* --- ドラッグ（元のコードと同じ方式：stuRef内イベント） --- */
+  /* --- ドラッグ --- */
   const startDrag = useCallback((id: string, e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     const pt = "touches" in e ? e.touches[0] : e;
@@ -250,17 +207,16 @@ export default function Home() {
     setItems(prev => prev.map(i => (i.id === did ? { ...i, x: i.x + dx, y: i.y + dy } : i)));
   }, [setItems]);
 
-  const stopDrag = useCallback(() => {
-    dragRef.current = null;
-  }, []);
+  const stopDrag = useCallback(() => { dragRef.current = null; }, []);
 
   /* --- CRUD --- */
   const addItem = (type: EquipmentType) => {
     const meta = TYPE_META[type];
+    const cx = layout.sidePx + layout.floorPx * 0.5;
+    const cy = layout.floorPxH * 0.5;
     const item: Equipment = {
       id: uid(), type, label: meta.defaultLabel,
-      x: layout.sidePx + layout.floorPx * 0.5, y: layout.floorPxH * 0.5,
-      rotation: 0, tilt: 0,
+      x: cx, y: cy, rotation: 0, tilt: 0,
       power: meta.isLight ? "1/4" : "—",
       height: meta.isLight ? 200 : 0,
       group: meta.isLight ? "A" : null,
@@ -327,7 +283,6 @@ export default function Home() {
           ${lightItems.length > 0 ? `<div style="margin-top:20px;"><div style="font-size:10px;font-weight:700;color:#8E8E93;letter-spacing:0.08em;margin-bottom:8px;">STROBE (${lightItems.length})</div><div>${strobeRows}</div></div>` : ""}
         </div>
       </div>`;
-
     document.body.appendChild(overlay);
     if (clone) { clone.style.transform = "scale(0.95)"; clone.style.transformOrigin = "top left"; const slot = document.getElementById("print-studio-slot"); if (slot) slot.appendChild(clone); }
     window.print();
@@ -340,9 +295,6 @@ export default function Home() {
   const switchPreset = (id: string) => { setPresetId(id); setSelectedId(null); };
   const isLight = sel ? TYPE_META[sel.type].isLight : false;
 
-  /* ============================================================
-     JSX
-  ============================================================ */
   return (
     <div className="flex flex-col h-screen" style={{ background: C.bg, color: C.text, fontFamily: "'Inter','Noto Sans JP',sans-serif" }}>
       {/* ヘッダー */}
@@ -378,25 +330,20 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* ===== スタジオ ===== */}
+        {/* スタジオ */}
         <main className={`flex-1 overflow-auto flex items-start justify-center p-4 ${mobileTab !== "studio" ? "hidden sm:flex" : ""}`}>
           <div className="rounded-2xl" style={{ background: C.card, padding: 12, boxShadow: "0 2px 20px rgba(0,0,0,0.06)" }}>
-            <div
-              ref={stuRef}
-              className="relative overflow-visible"
-              data-studio
+            <div ref={stuRef} className="relative overflow-visible" data-studio
               style={{ width: layout.totalPx, height: layout.totalPxH }}
-              onMouseMove={onMove}
-              onMouseUp={stopDrag}
-              onMouseLeave={stopDrag}
-              onTouchMove={onMove}
-              onTouchEnd={stopDrag}
-            >
+              onMouseMove={onMove} onMouseUp={stopDrag} onMouseLeave={stopDrag}
+              onTouchMove={onMove} onTouchEnd={stopDrag}
+              onClick={() => setSelectedId(null)}>
+
               {/* 機材エリア（左サイド） */}
               <div className="absolute top-0 left-0" style={{ width: layout.sidePx, height: layout.floorPxH, background: preset.sideColor, borderRadius: "12px 0 0 0" }} />
               {/* 撮影エリア */}
               <div className="absolute top-0" style={{ left: layout.sidePx, width: layout.floorPx, height: layout.floorPxH, background: preset.floorColor, borderRadius: "0 12px 0 0" }} />
-              {/* 余白エリア */}
+              {/* 余白 */}
               <div data-print-margin className="absolute" style={{ left: 0, top: layout.floorPxH, width: layout.totalPx, height: layout.marginPxH, background: C.margin, borderRadius: "0 0 12px 12px" }} />
 
               {/* 境界線 */}
@@ -417,37 +364,26 @@ export default function Home() {
                 const isRef = item.type === "ref-white" || item.type === "ref-black";
                 const tiltStr = TYPE_META[item.type].isLight && item.tilt !== 0 ? ` ${item.tilt > 0 ? "↑" : "↓"}${Math.abs(item.tilt)}°` : "";
                 return (
-                  <div key={item.id} className="absolute z-10" style={{ left: item.x, top: item.y, width: "max-content", minWidth: "max-content" }}>
-                    {/* 光コーン */}
+                  <div key={item.id} className="absolute z-10" style={{ left: item.x, top: item.y, transform: "translate(-50%, -50%)" }}>
                     <ConeWithGroup rotation={item.rotation} type={item.type} group={item.group} />
-                    {/* チップ本体 */}
-                   <div
-  onMouseDown={e => startDrag(item.id, e)}
-  onTouchStart={e => startDrag(item.id, e)}
-  onClick={() => setSelectedId(item.id)}
-  className="relative z-10 cursor-move select-none rounded-xl"
-  style={{
-    whiteSpace: "nowrap", padding: "5px 10px",
-    background: isSel ? C.accentSoft : "#F5F5F7",
-    border: `1.5px solid ${isSel ? C.accent : "#E0E0E0"}`,
-    boxShadow: isSel ? `0 2px 12px ${C.accent}33` : "0 1px 4px rgba(0,0,0,0.06)",
-    ...(isRef ? { transform: `rotate(${item.rotation}deg)`, transformOrigin: "center center" } : {}),
-  }}
->
-  <div className="flex items-center gap-2">
-    <span style={{ color: isSel ? C.accent : "#555" }}><Icon type={item.type} size={20} /></span>
-    <span style={{ fontSize: 11, fontWeight: 600, color: isSel ? C.text : "#333" }}>
-      {item.label}{tiltStr}
-    </span>
-    {item.group && (
-      <span style={{
-        width: 8, height: 8, borderRadius: "50%",
-        background: G_CLR[item.group].dot,
-        boxShadow: `0 0 6px ${G_CLR[item.group].dot}55`,
-      }} />
-    )}
-  </div>
-</div>
+                    <div
+                      onMouseDown={e => startDrag(item.id, e)}
+                      onTouchStart={e => startDrag(item.id, e)}
+                      onClick={e => { e.stopPropagation(); setSelectedId(item.id); }}
+                      className="relative z-10 cursor-move select-none rounded-xl"
+                      style={{
+                        whiteSpace: "nowrap", padding: "5px 10px",
+                        background: isSel ? C.accentSoft : "#F5F5F7",
+                        border: `1.5px solid ${isSel ? C.accent : "#E0E0E0"}`,
+                        boxShadow: isSel ? `0 2px 12px ${C.accent}33` : "0 1px 4px rgba(0,0,0,0.06)",
+                        ...(isRef ? { transform: `rotate(${item.rotation}deg)`, transformOrigin: "center center" } : {}),
+                      }}>
+                      <div className="flex items-center gap-2">
+                        <span style={{ color: isSel ? C.accent : "#555" }}><Icon type={item.type} size={20} /></span>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: isSel ? C.text : "#333" }}>{item.label}{tiltStr}</span>
+                        {item.group && (<span style={{ width: 8, height: 8, borderRadius: "50%", background: G_CLR[item.group].dot, boxShadow: `0 0 6px ${G_CLR[item.group].dot}55` }} />)}
+                      </div>
+                    </div>
                   </div>
                 );
               })}
@@ -455,7 +391,7 @@ export default function Home() {
           </div>
         </main>
 
-        {/* ===== 右パネル ===== */}
+        {/* 右パネル */}
         <aside className={`overflow-y-auto print:hidden ${mobileTab !== "settings" ? "hidden sm:block" : "w-full sm:w-auto"}`} style={{ width: mobileTab === "settings" ? "100%" : 220, minWidth: 220, background: C.card, borderLeft: `1px solid ${C.border}`, padding: 16 }}>
           {/* モバイル用 */}
           <div className="sm:hidden" style={{ marginBottom: 16 }}>
@@ -473,7 +409,7 @@ export default function Home() {
             <div className="space-y-3">
               <div><div style={{ fontSize: 10, color: C.textSub, marginBottom: 4 }}>絞り</div><Opts options={F_OPT} value={cam.aperture} onChange={v => setCam(c => ({ ...c, aperture: v }))} cols={5} /></div>
               <div><div style={{ fontSize: 10, color: C.textSub, marginBottom: 4 }}>SS</div><Opts options={SS_OPT} value={cam.shutter} onChange={v => setCam(c => ({ ...c, shutter: v }))} cols={5} /></div>
-              <div><div style={{ fontSize: 10, color: C.textSub, marginBottom: 4 }}>ISO</div><Opts options={ISO_OPT} value={cam.iso} onChange={v => setCam(c => ({ ...c, iso: v }))} cols={3} /></div>
+              <div><div style={{ fontSize: 10, color: C.textSub, marginBottom: 4 }}>ISO</div><Opts options={ISO_OPT} value={cam.iso} onChange={v => setCam(c => ({ ...c, iso: v }))} cols={4} /></div>
             </div>
           </div>
 
