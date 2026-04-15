@@ -236,7 +236,7 @@ export default function Home() {
   };
 
   /* --- PDF出力 --- */
-    const printPDF = () => {
+     const printPDF = () => {
     const studioEl = document.querySelector("[data-studio]") as HTMLElement | null;
     if (!studioEl) return;
 
@@ -255,28 +255,18 @@ export default function Home() {
         </tr>`;
     }).join("");
 
-    // クローン作成、余白を非表示
+    // クローン作成（余白も含めてそのまま）
     const clone = studioEl.cloneNode(true) as HTMLElement;
-    const cm = clone.querySelector("[data-print-margin]") as HTMLElement | null;
-    const cl = clone.querySelector("[data-print-margin-label]") as HTMLElement | null;
-    if (cm) cm.style.display = "none";
-    if (cl) cl.style.display = "none";
-    clone.style.height = layout.floorPxH + "px";
-    clone.style.overflow = "hidden";
 
-    // A4横: 約297mm x 210mm → margin 5mm引くと 287x200mm → px換算(96dpi) ≒ 1093x756
-    // 右パネル240px、gap20px、padding40px → 配置図使える幅 ≒ 793px
+    // A4横で余白込みの全体をスケーリング
     const printW = 793;
-    const printH = 716; // 756 - padding
+    const printH = 716;
     const scaleW = printW / layout.totalPx;
-    const scaleH = printH / layout.floorPxH;
+    const scaleH = printH / layout.totalPxH;  // ← floorPxH → totalPxH（余白込み）
     const finalScale = Math.min(scaleW, scaleH);
 
     clone.style.transform = `scale(${finalScale})`;
     clone.style.transformOrigin = "top left";
-
-    const scaledW = layout.totalPx * finalScale;
-    const scaledH = layout.floorPxH * finalScale;
 
     const overlay = document.createElement("div");
     overlay.id = "print-overlay";
@@ -284,7 +274,7 @@ export default function Home() {
 
     overlay.innerHTML = `
       <div style="display:flex;gap:20px;height:100%;box-sizing:border-box;">
-        <div id="print-studio-slot" style="flex:1;overflow:hidden;position:relative;width:${scaledW}px;height:${scaledH}px;"></div>
+        <div id="print-studio-slot" style="flex:1;overflow:hidden;"></div>
         <div style="width:240px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;padding-top:0;">
           <div>
             <div style="font-size:20px;font-weight:800;color:#2C2C2E;">${preset.name}</div>
