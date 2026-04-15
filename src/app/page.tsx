@@ -452,6 +452,13 @@ export default function Home() {
             <div>
               <div style={{ fontSize: 10, fontWeight: 700, color: C.textSub, letterSpacing: "0.08em", marginBottom: 8 }}>{isLight ? "STROBE" : "EQUIPMENT"}</div>
               <div style={{ marginBottom: 12 }}><div style={{ fontSize: 10, color: C.textSub, marginBottom: 4 }}>ラベル</div><input value={sel.label} onChange={e => updateItem(sel.id, { label: e.target.value })} style={{ width: "100%", padding: "4px 8px", fontSize: 12, borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, outline: "none" }} /></div>
+               {/* レフ板の回転 */}
+              {(sel.type === "ref-white" || sel.type === "ref-black") && (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 10, color: C.textSub, marginBottom: 4 }}>回転 ({sel.rotation}°)</div>
+                  <input type="range" min={-180} max={180} value={sel.rotation} onChange={e => updateItem(sel.id, { rotation: Number(e.target.value) })} style={{ width: "100%", accentColor: C.accent }} />
+                </div>
+              )}
               {isLight && (<>
                 <div style={{ marginBottom: 12 }}><div style={{ fontSize: 10, color: C.textSub, marginBottom: 4 }}>向き ({sel.rotation}°)</div><input type="range" min={-180} max={180} value={sel.rotation} onChange={e => updateItem(sel.id, { rotation: Number(e.target.value) })} style={{ width: "100%", accentColor: C.accent }} /></div>
                 <div style={{ marginBottom: 12 }}>
